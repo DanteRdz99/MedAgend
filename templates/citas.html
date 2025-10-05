@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Citas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+</head>
+<body>
+    <header>
+        <h1>Sistema de Gestión de Citas Médicas</h1>
+    </header>
+    <nav>
+        <a href="{{ url_for('index') }}">Inicio</a>
+        <a href="{{ url_for('pacientes') }}">Pacientes</a>
+        <a href="{{ url_for('medicos') }}">Médicos</a>
+        <a href="{{ url_for('citas') }}">Citas</a>
+        <a href="{{ url_for('historial') }}">Historial</a>
+        <a href="{{ url_for('chat') }}">Asistente IA</a> <a href="{{ url_for('logout') }}">Cerrar Sesión</a>
+    </nav>
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <div class="card">
+            <div class="card-header">
+                <h2>Agendar Cita</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('citas') }}">
+                    <div class="mb-3">
+                        <label for="id_cita" class="form-label">ID Cita</label>
+                        <input type="text" class="form-control" id="id_cita" name="id_cita" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_paciente" class="form-label">ID Paciente</label>
+                        <input type="text" class="form-control" id="id_paciente" name="id_paciente" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_medico" class="form-label">ID Médico</label>
+                        <input type="text" class="form-control" id="id_medico" name="id_medico" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fecha" class="form-label">Fecha (YYYY-MM-DD)</label>
+                        <input type="text" class="form-control" id="fecha" name="fecha" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="hora" class="form-label">Hora (HH:MM)</label>
+                        <input type="text" class="form-control" id="hora" name="hora" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" name="agendar">Agendar</button>
+                </form>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <h2>Modificar Cita</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('citas') }}">
+                    <div class="mb-3">
+                        <label for="id_cita_mod" class="form-label">ID Cita</label>
+                        <input type="text" class="form-control" id="id_cita_mod" name="id_cita" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fecha_mod" class="form-label">Nueva Fecha (YYYY-MM-DD)</label>
+                        <input type="text" class="form-control" id="fecha_mod" name="fecha" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="hora_mod" class="form-label">Nueva Hora (HH:MM)</label>
+                        <input type="text" class="form-control" id="hora_mod" name="hora" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" name="modificar">Modificar</button>
+                </form>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <h2>Cancelar Cita</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('citas') }}">
+                    <div class="mb-3">
+                        <label for="id_cita_cancel" class="form-label">ID Cita</label>
+                        <input type="text" class="form-control" id="id_cita_cancel" name="id_cita" required>
+                    </div>
+                    <button type="submit" class="btn btn-danger" name="cancelar">Cancelar</button>
+                </form>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <h2>Lista de Citas</h2>
+            </div>
+            <div class="card-body">
+                {% if citas %}
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID Cita</th>
+                                <th>ID Paciente</th>
+                                <th>ID Médico</th>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cita in citas %}
+                                <tr>
+                                    <td>{{ cita['id_cita'] }}</td>
+                                    <td>{{ cita['id_paciente'] }}</td>
+                                    <td>{{ cita['id_medico'] }}</td>
+                                    <td>{{ cita['fecha'] }}</td>
+                                    <td>{{ cita['hora'] }}</td>
+                                    <td>{{ cita['estado'] }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>No hay citas registradas.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Incluir Flatpickr -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        // Inicializar Flatpickr para los campos de fecha
+        flatpickr("#fecha", {
+            dateFormat: "Y-m-d",
+            minDate: "today"
+        });
+        flatpickr("#fecha_mod", {
+            dateFormat: "Y-m-d",
+            minDate: "today"
+        });
+        // Inicializar Flatpickr para los campos de hora
+        flatpickr("#hora", {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true
+        });
+        flatpickr("#hora_mod", {
+            enableTime: true,
+            noCalendar: true,
+            dateFormat: "H:i",
+            time_24hr: true
+        });
+    </script>
+</body>
+</html>
