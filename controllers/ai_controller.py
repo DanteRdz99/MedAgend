@@ -21,8 +21,8 @@ class AiController:
         }
         
         self.model = genai.GenerativeModel(
-            # --- ESTA ES LA CORRECCIÓN ---
-            model_name='gemini-pro',
+            # --- ESTA ES LA CORRECCIÓN (v3) ---
+            model_name='gemini-1.0-pro',
             # --- FIN DE LA CORRECCIÓN ---
             system_instruction=self.get_system_prompt(),
             tools=list(self.tools.values()) # Pasar las funciones a Gemini
