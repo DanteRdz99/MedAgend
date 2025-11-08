@@ -11,18 +11,24 @@ def patient_required(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        # g.user es cargado en app.py
         if not g.user or g.user['role'] != 'paciente':
             return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated_function
 
-@chat_bp.route('/chat')
+@chat_bp.route('/')
 @patient_required
 def chat_view():
-    """Muestra la página principal del chat."""
+    """
+    Muestra la página principal del chat.
+    La ruta final será /chat/ gracias al prefijo en app.py
+    """
     # Inicializar el historial en la sesión
     if 'chat_history' not in session:
         session['chat_history'] = []
+    
+    # Pasamos el historial guardado en la sesión a la plantilla
     return render_template('chat.html', chat_history=session['chat_history'])
 
 @chat_bp.route('/api/chat', methods=['POST'])
@@ -41,19 +47,29 @@ def api_chat_message():
     # Añadir mensaje de usuario al historial de sesión
     session['chat_history'].append({"role": "user", "content": user_message})
     
-    # Crear el controlador de IA (ahora necesita al usuario)
-    # g.user es el usuario cargado en app.py, que incluye 'paciente_id', etc.
-    ai_controller = AiController(user=g.user) 
-    
-    # Obtener respuesta de la IA (manejando el historial internamente)
-    ai_response = ai_controller.handle_message(user_message)
-    
-    # Añadir respuesta de IA al historial de sesión
-    session['chat_history'].append({"role": "ai", "content": ai_response})
-    session.modified = True # Marcar la sesión como modificada
-    
-    # Devolver solo la respuesta de la IA
-    return jsonify({"response": ai_response})
+    try:
+        # Crear el controlador de IA (ahora necesita al usuario)
+        # g.user es el usuario cargado en app.py, que incluye 'paciente_id', etc.
+        ai_controller = AiController(user=g.user) 
+        
+        # Obtener respuesta de la IA (manejando el historial internamente)
+        ai_response = ai_controller.handle_message(user_message)
+        
+        # Añadir respuesta de IA al historial de sesión
+        session['chat_history'].append({"role": "ai", "content": ai_response})
+        session.modified = True # Marcar la sesión como modificada
+        
+        # Devolver solo la respuesta de la IA
+        return jsonify({"response": ai_response})
+        
+    except Exception as e:
+        # Manejo de errores (ej. API Key de Gemini inválida)
+        print(f"Error en api_chat_message: {e}")
+        error_message = "Lo siento, tuve un error de conexión con el asistente. (Verifica la API Key de Gemini)"
+        session['chat_history'].append({"role": "ai", "content": error_message})
+        session.modified = True
+        return jsonify({"response": error_message}), 500
+
 
 @chat_bp.route('/api/chat/clear', methods=['POST'])
 @patient_required

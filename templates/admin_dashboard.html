@@ -1,0 +1,104 @@
+{% extends 'layout.html' %}
+{% block title %}Admin Dashboard - MedAgenda{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Dashboard de Administrador</h2>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Registrar Nuevo Médico</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('views.admin_dashboard') }}">
+            <input type="hidden" name="registrar_medico" value="true">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="nombre_completo" class="form-label">Nombre Completo</label>
+                    <input type="text" class="form-control" id="nombre_completo" name="nombre_completo" required>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="especialidad" class="form-label">Especialidad</label>
+                    <input type="text" class="form-control" id="especialidad" name="especialidad" required>
+                </div>
+                <div class="col-md-5 mb-3">
+                    <label for="horario_trabajo" class="form-label">Horario de Trabajo (en JSON)</label>
+                    <textarea class="form-control" id="horario_trabajo" name="horario_trabajo" rows="3" placeholder='Ej: {"lunes": ["09:00-13:00"], "martes": ["09:00-13:00"]}'></textarea>
+                    <small class="form-text text-muted">Dejar vacío para usar horario por defecto.</small>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Registrar Médico</button>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Médicos Registrados</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Especialidad</th>
+                        <th>Horario (JSON)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for medico in medicos %}
+                    <tr>
+                        <td>{{ medico.id }}</td>
+                        <td>{{ medico.nombre_completo }}</td>
+                        <td>{{ medico.especialidad }}</td>
+                        <td style="max-width: 300px; white-space: pre-wrap; word-break: break-all;"><code>{{ medico.horario_trabajo }}</code></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center">No hay médicos registrados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h5 class="mb-0">Pacientes Registrados</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Teléfono</th>
+                        <th>Username</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for paciente in pacientes %}
+                    <tr>
+                        <td>{{ paciente.id }}</td>
+                        <td>{{ paciente.nombre_completo }}</td>
+                        <td>{{ paciente.email }}</td>
+                        <td>{{ paciente.telefono }}</td>
+                        <td>{{ paciente.username }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center">No hay pacientes registrados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

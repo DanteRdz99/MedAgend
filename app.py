@@ -1,6 +1,6 @@
 from flask import Flask, session, redirect, url_for, g
-from controllers.database import init_db, get_db_connection
-from services.auth_service import get_user_by_id
+from controllers.database import init_db
+from services import auth_service  # Importar el servicio
 import os
 from dotenv import load_dotenv
 
@@ -21,9 +21,9 @@ def create_app():
         init_db()
 
     # Registrar los Blueprints
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(chat_bp)
-    app.register_blueprint(views_bp)
+    app.register_blueprint(auth_bp, url_prefix='/auth') # http://.../auth/login
+    app.register_blueprint(chat_bp, url_prefix='/chat') # http://.../chat
+    app.register_blueprint(views_bp, url_prefix='/views') # http://.../views/admin/dashboard
 
     @app.before_request
     def load_logged_in_user():
@@ -35,13 +35,13 @@ def create_app():
         if user_id is None:
             g.user = None
         else:
-            # Cargar usuario desde la BD
-            g.user = get_user_by_id(user_id)
+            # Usar la nueva función del servicio para obtener todos los datos
+            g.user = auth_service.get_user_data_for_session(user_id)
 
     @app.route('/')
     def index():
         # Redirigir según el rol
-        if 'user_id' in session and g.user:
+        if g.user:
             if g.user['role'] == 'admin':
                 return redirect(url_for('views.admin_dashboard'))
             else:
