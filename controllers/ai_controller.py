@@ -21,7 +21,9 @@ class AiController:
         }
         
         self.model = genai.GenerativeModel(
-            model_name='gemini-1.5-flash',
+            # --- ESTA ES LA CORRECCIÓN ---
+            model_name='gemini-pro',
+            # --- FIN DE LA CORRECCIÓN ---
             system_instruction=self.get_system_prompt(),
             tools=list(self.tools.values()) # Pasar las funciones a Gemini
         )
@@ -92,7 +94,8 @@ class AiController:
             return response.text
 
         except Exception as e:
-            print(f"Error en AiController: {e}")
+            # Imprime el error real en la terminal (esto es lo que vimos)
+            print(f"Error en AiController: {e}") 
             return "Lo siento, tuve un error procesando tu solicitud. Por favor, intenta de nuevo."
 
     # --- Definiciones de Herramientas (Las funciones que la IA puede llamar) ---

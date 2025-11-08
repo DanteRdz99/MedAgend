@@ -44,6 +44,12 @@ def api_chat_message():
     if not user_message:
         return jsonify({"error": "No se recibió ningún mensaje."}), 400
     
+    # --- ESTA ES LA CORRECCIÓN ---
+    # Asegurarse de que el historial exista si el usuario lo limpió
+    if 'chat_history' not in session:
+        session['chat_history'] = []
+    # --- FIN DE LA CORRECCIÓN ---
+    
     # Añadir mensaje de usuario al historial de sesión
     session['chat_history'].append({"role": "user", "content": user_message})
     
@@ -66,8 +72,12 @@ def api_chat_message():
         # Manejo de errores (ej. API Key de Gemini inválida)
         print(f"Error en api_chat_message: {e}")
         error_message = "Lo siento, tuve un error de conexión con el asistente. (Verifica la API Key de Gemini)"
-        session['chat_history'].append({"role": "ai", "content": error_message})
-        session.modified = True
+        
+        # AÑADIDO: También guardar este error en el historial
+        if 'chat_history' in session:
+            session['chat_history'].append({"role": "ai", "content": error_message})
+            session.modified = True
+            
         return jsonify({"response": error_message}), 500
 
 
