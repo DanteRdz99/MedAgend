@@ -1,108 +1,143 @@
 import os
-from google import genai
-from controllers.cita_controller import CitaController
-from controllers.historial_controller import HistorialController
+import google.generativeai as genai
+from services import medico_service, cita_service
+from datetime import datetime
 
 class AiController:
-    def __init__(self):
-        # 1. Inicializar el cliente de Gemini
+    def __init__(self, user):
+        self.user = user  # El usuario que está chateando
+        
         api_key = os.environ.get("GEMINI_API_KEY")
         if not api_key:
-            # En un entorno real, esto debería ser un error, pero lo dejamos aquí para recordatorio
-            print("ADVERTENCIA: La variable de entorno GEMINI_API_KEY no está configurada. El chat NO funcionará.")
-            self.ai_client = None
-        else:
-            try:
-                self.ai_client = genai.Client(api_key=api_key)
-                self.model = 'gemini-2.5-flash'  # Modelo rápido y eficiente para chat
-            except Exception as e:
-                print(f"Error al inicializar el cliente de Gemini: {e}")
-                self.ai_client = None
-
-
-        # 2. Inicializar controladores de negocio
-        self.cita_controller = CitaController()
-        self.historial_controller = HistorialController()
-        
-
-    def _build_context_prompt(self, user_id):
-        """Construye un prompt de sistema con el contexto del paciente y la personalidad."""
-        
-        # Obtener datos del historial para sugerencias de citas
-        historial_data = self.historial_controller.consultar_historial(user_id)
-        
-        historial_text = "No se encontró historial médico."
-        if historial_data:
-            # Presentamos el historial de forma amigable para la IA
-            registros = [f"Fecha: {h['fecha']}, Descripción: {h['descripcion']}" for h in historial_data]
-            historial_text = "\n".join(registros)
-        
-        # Instrucciones detalladas para la IA (Nuevo Prompt Conversacional)
-        system_prompt = f"""
-        Eres **MedAgenda**, un asistente virtual amable y empático de la Clínica de Salud Especializada. Tu rol es asistir a los pacientes con un tono cálido, humano y muy intuitivo. Tu principal objetivo es hacer que el proceso de agendar citas sea sencillo y agradable.
-
-        Tus funciones son:
-        1. **Responder Dudas:** Responde de manera concisa y amigable a cualquier pregunta sobre la clínica (horarios, ubicación, especialidades).
-        2. **Guía de Citas:** Si el usuario quiere una cita, debes guiarlo paso a paso. Pregúntale con quién, qué día y a qué hora le gustaría.
-        3. **Sugerir Citas de Seguimiento:** Usa el 'Historial del Paciente' para sugerir una cita de seguimiento si la información es reciente o relevante.
-
-        ---
-        TONO Y ESTILO:
-        - **Siempre** usa un lenguaje conversacional, positivo y jamás técnico (evita palabras como 'ID', 'parámetro' o 'variable', a menos que sea estrictamente necesario para el comando de agendamiento final).
-        - Haz preguntas al paciente para continuar la conversación.
-
-        ---
-        REGLA DE COMANDO FINAL:
-        - El agendamiento real ocurre cuando el usuario ingresa el siguiente **comando técnico**. Cuando creas que tienes suficiente información (médico, fecha, hora), guía al usuario a usar este formato exacto para finalizar:
-          'agendar cita ID_Cita ID_Paciente ID_Medico Fecha Hora'
-        
-        ---
-        HISTORIAL DEL PACIENTE ({user_id}):
-        {historial_text}
-        ---
-        """
-        return system_prompt
-
-    def get_ai_response(self, user_id, message):
-        """Llama a la API de Gemini con el contexto del sistema."""
-        
-        if not self.ai_client:
-            return "Lo siento, el asistente virtual no está disponible porque la clave API no está configurada correctamente. Por favor, asegúrate de haber configurado la GEMINI_API_KEY."
-
-        # 1. Lógica de Ejecución de Comando (Se mantiene técnico porque ejecuta código)
-        message_lower = message.lower()
-        if message_lower.startswith("agendar cita "):
-            try:
-                # El usuario ya ingresó el comando técnico final. Ejecutamos la lógica de negocio.
-                parts = message.split()
-                if len(parts) == 6:
-                    id_cita, id_paciente, id_medico, fecha, hora = parts[1], parts[2], parts[3], parts[4], parts[5]
-                    resultado = self.cita_controller.agendar_cita(id_cita, id_paciente, id_medico, fecha, hora)
-                    # Respuesta conversacional para la confirmación del comando
-                    if "exitosamente" in resultado:
-                        return f"¡Cita agendada! 🎉 Tu cita con el médico {id_medico} para el {fecha} a las {hora} ha sido confirmada. El sistema dice: '{resultado}'."
-                    else:
-                        return f"Lo siento, hubo un problema al agendar la cita. El sistema dice: '{resultado}'. Por favor, verifica que los IDs y formatos sean correctos."
-                else:
-                    return "El comando de agendamiento final es incorrecto. Debe tener 6 partes. ¿Puedes revisarlo?"
-            except Exception as e:
-                return f"Ocurrió un error inesperado al procesar el comando final. Inténtalo de nuevo."
-
-        # 2. Llamada a la IA para conversación y sugerencias
-        try:
-            prompt = self._build_context_prompt(user_id)
+            raise ValueError("GEMINI_API_KEY no encontrada en .env")
             
-            # Usamos el LLM para toda la conversación (FAQs, sugerencias y guía)
-            response = self.ai_client.models.generate_content(
-                model=self.model,
-                contents=[
-                    # Se usa el prompt del sistema y el mensaje del usuario para la conversación
-                    {"role": "user", "parts": [{"text": prompt}]}, 
-                    {"role": "user", "parts": [{"text": message}]}
-                ]
-            )
-            return response.text
+        genai.configure(api_key=api_key)
         
+        # Definir las herramientas que la IA puede usar
+        self.tools = {
+            "get_medicos_disponibles": self.get_medicos_disponibles,
+            "agendar_cita": self.agendar_cita,
+            "get_mis_citas": self.get_mis_citas,
+        }
+        
+        self.model = genai.GenerativeModel(
+            model_name='gemini-1.5-flash',
+            system_instruction=self.get_system_prompt(),
+            tools=list(self.tools.values()) # Pasar las funciones a Gemini
+        )
+        self.chat = self.model.start_chat(history=[])
+
+    def get_system_prompt(self):
+        """Genera el prompt del sistema basado en el usuario."""
+        return f"""
+        Eres 'MedAgenda', un asistente virtual médico de clase mundial.
+        Tu propósito es ayudar a los pacientes a gestionar su salud.
+        Eres amable, empático y extremadamente competente.
+
+        Información del Usuario Actual:
+        - Nombre: {self.user['nombre_completo']}
+        - ID de Paciente: {self.user['paciente_id']}
+        - Email: {self.user['email']}
+
+        Reglas:
+        1. NUNCA pidas el ID del paciente, ya lo sabes ({self.user['paciente_id']}).
+        2. Para agendar, DEBES usar la herramienta 'agendar_cita'.
+        3. Antes de agendar, usa 'get_medicos_disponibles' para encontrar al médico y su ID.
+        4. El formato de fecha y hora para agendar es 'AAAA-MM-DDTHH:MM'. Hoy es {datetime.now().strftime('%Y-%m-%d')}.
+        5. Sé proactivo. Si el paciente pregunta por sus citas, usa 'get_mis_citas'.
+        """
+
+    def handle_message(self, message):
+        """
+        Maneja un nuevo mensaje del usuario y ejecuta el ciclo de IA (Tool Calling).
+        """
+        try:
+            # 1. Enviar mensaje a Gemini
+            response = self.chat.send_message(message)
+            
+            # 2. Revisar si la IA quiere usar una herramienta
+            while response.candidates[0].content.parts[0].function_call:
+                function_call = response.candidates[0].content.parts[0].function_call
+                tool_name = function_call.name
+                tool_args = {key: value for key, value in function_call.args.items()}
+                
+                print(f"IA quiere llamar a: {tool_name} con args: {tool_args}")
+                
+                # 3. Ejecutar la herramienta (función de Python)
+                if tool_name in self.tools:
+                    tool_function = self.tools[tool_name]
+                    
+                    # --- Lógica especial de IA ---
+                    # Inyectar el paciente_id si la IA no lo sabe
+                    if 'paciente_id' not in tool_args and (tool_name == 'agendar_cita' or tool_name == 'get_mis_citas'):
+                        tool_args['paciente_id'] = self.user['paciente_id']
+                    
+                    tool_result = tool_function(**tool_args)
+                else:
+                    tool_result = {"error": f"Herramienta '{tool_name}' desconocida."}
+                
+                print(f"Resultado de la herramienta: {tool_result}")
+
+                # 4. Enviar el resultado de la herramienta de vuelta a Gemini
+                response = self.chat.send_message(
+                    genai.Part(
+                        function_response=genai.protos.FunctionResponse(
+                            name=tool_name,
+                            response={'result': tool_result}
+                        )
+                    )
+                )
+            
+            # 5. La IA ha respondido con texto
+            return response.text
+
         except Exception as e:
-            print(f"Error en la llamada a la API de Gemini: {e}")
-            return "Lo siento, la IA tuvo un error de comunicación. Por favor, intenta de nuevo en unos momentos."
+            print(f"Error en AiController: {e}")
+            return "Lo siento, tuve un error procesando tu solicitud. Por favor, intenta de nuevo."
+
+    # --- Definiciones de Herramientas (Las funciones que la IA puede llamar) ---
+    
+    def get_medicos_disponibles(self, especialidad: str = None):
+        """
+        Obtiene una lista de médicos. Puede filtrarse por especialidad.
+        
+        Args:
+            especialidad (str, optional): La especialidad a filtrar (ej. 'Cardiología').
+        """
+        print(f"Buscando médicos por especialidad: {especialidad}")
+        medicos = medico_service.get_medicos(especialidad_filter=especialidad)
+        if not medicos:
+            return {"error": "No se encontraron médicos con esa especialidad."}
+        return {"medicos": medicos}
+
+    def agendar_cita(self, paciente_id: int, medico_id: int, fecha_hora_inicio: str, notas_paciente: str = ""):
+        """
+        Agenda una nueva cita para el paciente.
+        
+        Args:
+            paciente_id (int): El ID del paciente.
+            medico_id (int): El ID del médico.
+            fecha_hora_inicio (str): La fecha y hora de inicio en formato 'AAAA-MM-DDTHH:MM'.
+            notas_paciente (str, optional): Notas que el paciente quiera añadir.
+        """
+        print(f"Intentando agendar cita para paciente {paciente_id} con médico {medico_id} a las {fecha_hora_inicio}")
+        resultado = cita_service.agendar_nueva_cita(
+            paciente_id=paciente_id,
+            medico_id=medico_id,
+            fecha_hora_inicio_str=fecha_hora_inicio,
+            notas=notas_paciente
+        )
+        return resultado # Devuelve el dict de éxito o error
+
+    def get_mis_citas(self, paciente_id: int):
+        """
+        Obtiene una lista de todas las citas (pasadas y futuras) del paciente.
+        
+        Args:
+            paciente_id (int): El ID del paciente.
+        """
+        print(f"Buscando citas para paciente {paciente_id}")
+        citas = cita_service.get_citas_paciente(paciente_id=paciente_id)
+        if not citas:
+            return {"error": "No tienes citas registradas."}
+        return {"citas": citas}
