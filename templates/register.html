@@ -2,47 +2,55 @@
 {% block title %}Registro de Paciente - MedAgenda{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <div class="card shadow-sm">
-            <div class="card-body p-4">
-                <h2 class="card-title text-center mb-4">Registro de Nuevo Paciente</h2>
-                <form method="POST" action="{{ url_for('auth.register') }}">
-                    
-                    <h5 class="text-muted mb-3">Datos de la Cuenta</h5>
-                    <div class="mb-3">
-                        <label for="username" class="form-label">Nombre de Usuario</label>
-                        <input type="text" class="form-control" id="username" name="username" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Contraseña</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
-                    </div>
-                    
-                    <hr class="my-4">
-                    
-                    <h5 class="text-muted mb-3">Datos Personales</h5>
-                    <div class="mb-3">
-                        <label for="nombre_completo" class="form-label">Nombre Completo</label>
-                        <input type="text" class="form-control" id="nombre_completo" name="nombre_completo" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="telefono" class="form-label">Teléfono</label>
-                        <input type="tel" class="form-control" id="telefono" name="telefono">
-                    </div>
-                    
-                    <div class="d-grid mt-4">
-                        <button type="submit" class="btn btn-primary">Crear Cuenta</button>
-                    </div>
-                </form>
-                <div class="text-center mt-3">
-                    <p>¿Ya tienes cuenta? <a href="{{ url_for('auth.login') }}">Inicia sesión</a></p>
-                </div>
+<div class="login-card card shadow-lg p-4 p-md-5">
+    <div class="card-body">
+
+        <div class="text-center mb-4">
+            <h2 class="login-brand">
+                <i class="bi bi-person-plus-fill"></i>
+                Crear Cuenta
+            </h2>
+            <p class="text-muted">Únete a MedAgenda para agendar tus citas.</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.register') }}">
+            
+            <h6 class="text-muted mb-3">Datos de la Cuenta</h6>
+            <div class="mb-3 form-icon-wrapper">
+                <i class="bi bi-person form-icon"></i>
+                <input type="text" class="form-control" id="username" name="username" placeholder="Nombre de Usuario" required>
             </div>
+            <div class="mb-3 form-icon-wrapper">
+                <i class="bi bi-lock form-icon"></i>
+                <input type="password" class="form-control" id="password" name="password" placeholder="Contraseña" required>
+            </div>
+            
+            <hr class="my-4">
+            
+            <h6 class="text-muted mb-3">Datos Personales</h6>
+            <div class="mb-3 form-icon-wrapper">
+                <i class="bi bi-person-vcard form-icon"></i>
+                <input type="text" class="form-control" id="nombre_completo" name="nombre_completo" placeholder="Nombre Completo" required>
+            </div>
+            <div class="mb-3 form-icon-wrapper">
+                <i class="bi bi-envelope form-icon"></i>
+                <input type="email" class="form-control" id="email" name="email" placeholder="Email" required>
+            </div>
+            <div class="mb-3 form-icon-wrapper">
+                <i class="bi bi-telephone form-icon"></i>
+                <input type="tel" class="form-control" id="telefono" name="telefono" placeholder="Teléfono">
+            </div>
+            
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-check-circle"></i> Crear Cuenta
+                </button>
+            </div>
+        </form>
+
+        <div class="text-center mt-4">
+            <p class="text-muted mb-0">¿Ya tienes cuenta?</p>
+            <a href="{{ url_for('auth.login') }}">Inicia sesión aquí</a>
         </div>
     </div>
 </div>

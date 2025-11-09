@@ -2,28 +2,41 @@
 {% block title %}Iniciar Sesión - MedAgenda{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-4">
-        <div class="card shadow-sm">
-            <div class="card-body p-4">
-                <h2 class="card-title text-center mb-4">Iniciar Sesión</h2>
-                <form method="POST" action="{{ url_for('auth.login') }}">
-                    <div class="mb-3">
-                        <label for="username" class="form-label">Nombre de Usuario</label>
-                        <input type="text" class="form-control" id="username" name="username" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Contraseña</label>
-                        <input type="password" class="form-control" id="password" name="password" required>
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Entrar</button>
-                    </div>
-                </form>
-                <div class="text-center mt-3">
-                    <p>¿No tienes cuenta? <a href="{{ url_for('auth.register') }}">Regístrate aquí</a></p>
-                </div>
+<div class="login-card card shadow-lg p-4 p-md-5">
+    <div class="card-body">
+        
+        <div class="text-center mb-4">
+            <h2 class="login-brand">
+                <i class="bi bi-heart-pulse-fill"></i>
+                MedAgenda
+            </h2>
+            <p class="text-muted">Bienvenido de nuevo. Inicia sesión en tu cuenta.</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('auth.login') }}">
+            
+            <div class="mb-3 form-icon-wrapper">
+                <label for="username" class="form-label visually-hidden">Nombre de Usuario</label>
+                <i class="bi bi-person form-icon"></i>
+                <input type="text" class="form-control" id="username" name="username" placeholder="Nombre de Usuario" required>
             </div>
+            
+            <div class="mb-4 form-icon-wrapper">
+                <label for="password" class="form-label visually-hidden">Contraseña</label>
+                <i class="bi bi-lock form-icon"></i>
+                <input type="password" class="form-control" id="password" name="password" placeholder="Contraseña" required>
+            </div>
+            
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-box-arrow-in-right"></i> Entrar
+                </button>
+            </div>
+        </form>
+        
+        <div class="text-center mt-4">
+            <p class="text-muted mb-0">¿No tienes cuenta?</p>
+            <a href="{{ url_for('auth.register') }}">Regístrate aquí como paciente</a>
         </div>
     </div>
 </div>
