@@ -15,13 +15,10 @@ def get_medicos(especialidad_filter=None):
         params = []
         
         if especialidad_filter:
-            # --- ESTA ES LA CORRECCIÓN ---
             # Usamos LOWER() para que no importe si el usuario escribe
             # "cardiologo" o "Cardiología".
-            # Usamos '%' para buscar la especialidad aunque escriban mal.
             query += " WHERE LOWER(especialidad) LIKE LOWER(?)"
             params.append(f"%{especialidad_filter}%")
-            # --- FIN DE LA CORRECCIÓN ---
             
         cursor.execute(query, params)
         medicos = cursor.fetchall()
@@ -35,7 +32,7 @@ def get_medicos(especialidad_filter=None):
         # Devolvemos una lista vacía en lugar de crashear
         return []
 
-def crear_medico(nombre_completo, especialidad, horario_json):
+def crear_medico(nombre_completo, especialidad, horario_json, ubicacion): # <-- AÑADIDO 'ubicacion'
     """
     Registra un nuevo médico en la base de datos.
     'horario_json' debe ser un string JSON válido.
@@ -47,12 +44,13 @@ def crear_medico(nombre_completo, especialidad, horario_json):
     try:
         json.loads(horario_json)
     except json.JSONDecodeError:
-        return {"error": "El formato del horario JSON es inválIDO."}
+        return {"error": "El formato del horario JSON es inválido."}
     
     try:
         cursor.execute(
-            "INSERT INTO medicos (nombre_completo, especialidad, horario_trabajo) VALUES (?, ?, ?)",
-            (nombre_completo, especialidad, horario_json)
+            # --- ¡CONSULTA ACTUALIZADA! ---
+            "INSERT INTO medicos (nombre_completo, especialidad, horario_trabajo, ubicacion) VALUES (?, ?, ?, ?)",
+            (nombre_completo, especialidad, horario_json, ubicacion)
         )
         conn.commit()
         return {"success": True, "id_medico": cursor.lastrowid}

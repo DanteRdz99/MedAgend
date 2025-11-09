@@ -101,7 +101,7 @@
                                 <th>ID</th>
                                 <th>Nombre</th>
                                 <th>Especialidad</th>
-                                <th>Horario (JSON)</th>
+                                <th>Ubicación</th> <th>Horario (JSON)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -110,13 +110,13 @@
                                 <td>{{ medico.id }}</td>
                                 <td>{{ medico.nombre_completo }}</td>
                                 <td><span class="badge bg-primary">{{ medico.especialidad }}</span></td>
-                                <td style="max-width: 300px; white-space: pre-wrap; word-break: break-all;">
+                                <td><i class="bi bi-geo-alt-fill"></i> {{ medico.ubicacion }}</td> <td style="max-width: 300px; white-space: pre-wrap; word-break: break-all;">
                                     <code>{{ medico.horario_trabajo }}</code>
                                 </td>
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="4" class="text-center text-muted">No hay médicos registrados.</td>
+                                <td colspan="5" class="text-center text-muted">No hay médicos registrados.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -130,12 +130,16 @@
                     <input type="hidden" name="registrar_medico" value="true">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label for="nombre_completo" class="form-label">Nombre Completo</label>
+                            <label for="nombre_completo" class="form-label">Nombre Completo</LAbel>
                             <input type="text" class="form-control" id="nombre_completo" name="nombre_completo" required>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <label for="especialidad" class="form-label">Especialidad</label>
                             <input type="text" class="form-control" id="especialidad" name="especialidad" required>
+                        </div>
+                         <div class="col-md-3">
+                            <label for="ubicacion" class="form-label">Ubicación</label>
+                            <input type="text" class="form-control" id="ubicacion" name="ubicacion" placeholder="Ej: Consultorio 105" required>
                         </div>
                         <div class="col-12">
                             <label for="horario_trabajo" class="form-label">Horario de Trabajo (en JSON)</label>

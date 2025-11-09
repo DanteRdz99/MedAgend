@@ -1,7 +1,10 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, g, session
-from services import paciente_service, medico_service
+from flask import Blueprint, render_template, request, redirect, url_for, flash, g
+from services import paciente_service, medico_service, cita_service # <-- AÑADIDO cita_service
 from functools import wraps
 import json
+
+# --- ¡NUEVO! Importamos el decorador de paciente ---
+from routes.chat_routes import patient_required 
 
 views_bp = Blueprint('views', __name__)
 
@@ -29,6 +32,7 @@ def admin_dashboard():
             nombre = request.form['nombre_completo']
             especialidad = request.form['especialidad']
             horario_json = request.form['horario_trabajo']
+            ubicacion = request.form['ubicacion'] # <-- ¡NUEVO CAMPO!
             
             # Ejemplo simple de horario por defecto si está vacío
             if not horario_json:
@@ -40,7 +44,8 @@ def admin_dashboard():
                     "viernes": ["09:00-13:00", "14:00-17:00"]
                 })
             
-            resultado = medico_service.crear_medico(nombre, especialidad, horario_json)
+            # --- ¡FUNCIÓN ACTUALIZADA! ---
+            resultado = medico_service.crear_medico(nombre, especialidad, horario_json, ubicacion)
             
             if resultado.get('success'):
                 flash("Médico registrado exitosamente.", "success")
@@ -54,3 +59,29 @@ def admin_dashboard():
     medicos = medico_service.get_medicos()
     
     return render_template('admin_dashboard.html', pacientes=pacientes, medicos=medicos)
+
+# --- ¡TODA ESTA ES LA NUEVA SECCIÓN PARA EL PORTAL DE PACIENTE! ---
+
+@views_bp.route('/portal')
+@patient_required
+def portal_paciente():
+    """
+    Muestra el nuevo Portal de Paciente.
+    """
+    # Obtenemos los datos para mostrar en el portal
+    
+    # 1. Médicos (para la tarjeta de "Consultar Médicos")
+    medicos = medico_service.get_medicos()
+    
+    # 2. Citas (para la tarjeta de "Mis Próximas Citas")
+    # g.user es el paciente logueado (incluye 'paciente_id')
+    citas_paciente = cita_service.get_citas_paciente(g.user['paciente_id'])
+    
+    # (Opcional) Convertir los horarios JSON de los médicos en algo legible
+    # Esto es avanzado, pero lo haremos en la plantilla con un truco.
+    
+    return render_template(
+        'portal_paciente.html', 
+        medicos=medicos, 
+        citas=citas_paciente
+    )

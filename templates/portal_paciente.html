@@ -1,0 +1,112 @@
+{% extends 'layout.html' %}
+{% block title %}Portal del Paciente{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-2">Bienvenido a tu Portal, {{ g.user.nombre_completo }}</h2>
+    <p class="lead text-muted mb-4">Aquí puedes gestionar tu salud y agendar citas fácilmente.</p>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-6">
+            <div class="card h-100 p-4 text-center bg-primary text-white shadow">
+                <div class="card-body">
+                    <i class="bi bi-robot" style="font-size: 3rem;"></i>
+                    <h4 class="card-title mt-3">Asistente Virtual IA</h4>
+                    <p>La forma más rápida de agendar. Chatea con MedAgenda para encontrar médicos y horarios.</p>
+                    <a href="{{ url_for('chat.chat_view') }}" class="btn btn-light btn-lg">
+                        <i class="bi bi-chat-dots-fill"></i> Ir al Chat
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card h-100 p-4 shadow">
+                <div class="card-body">
+                    <h4 class="card-title mb-3"><i class="bi bi-calendar-check"></i> Mis Próximas Citas</h4>
+                    {% if citas %}
+                        <ul class="list-group list-group-flush">
+                        {% for cita in citas %}
+                            {% if cita.estado == 'programada' %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ cita.medico_nombre }}</strong> ({{ cita.medico_especialidad }})
+                                    <br>
+                                    <small class="text-muted">{{ cita.fecha_hora_inicio }}</small>
+                                </div>
+                                <span class="badge bg-success">Programada</span>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted text-center mt-3">
+                            <i class="bi bi-calendar-x" style="font-size: 2rem;"></i><br>
+                            No tienes citas programadas.
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-4">
+    <h3 class="mb-4"><i class="bi bi-person-video3"></i> Directorio de Médicos</h3>
+    <div class="row g-4">
+        {% if medicos %}
+            {% for medico in medicos %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ medico.nombre_completo }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">{{ medico.especialidad }}</h6>
+                        <p class_card-text">
+                            <i class="bi bi-geo-alt-fill text-primary"></i> 
+                            {{ medico.ubicacion }}
+                        </p>
+                        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal-medico-{{ medico.id }}">
+                            <i class="bi bi-clock-fill"></i> Ver Horario
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="modal-medico-{{ medico.id }}" tabindex="-1" aria-labelledby="modalLabel-{{ medico.id }}" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="modalLabel-{{ medico.id }}">Horario de {{ medico.nombre_completo }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p><strong>Especialidad:</strong> {{ medico.especialidad }}</p>
+                            <p><strong>Ubicación:</strong> {{ medico.ubicacion }}</p>
+                            <hr>
+                            <h6>Turnos de Trabajo:</h6>
+                            {% set horario = medico.horario_trabajo | fromjson %}
+                            <ul class="list-group">
+                                {% for dia, turnos in horario.items() %}
+                                    <li class="list-group-item">
+                                        <strong>{{ dia | capitalize }}:</strong>
+                                        {% for turno in turnos %}
+                                            <span class="badge bg-secondary">{{ turno }}</span>
+                                        {% endfor %}
+                                    </li>
+                                {% else %}
+                                    <li class_list-group-item">Este médico no tiene un horario registrado.</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class_text-muted">No hay médicos registrados en este momento.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -45,7 +45,10 @@ def create_app():
             if g.user['role'] == 'admin':
                 return redirect(url_for('views.admin_dashboard'))
             else:
-                return redirect(url_for('chat.chat_view')) # Pacientes van al chat
+                # --- ¡CAMBIO IMPORTANTE! ---
+                # Los pacientes ya no van al chat, van a su nuevo portal
+                return redirect(url_for('views.portal_paciente')) 
+        
         return redirect(url_for('auth.login'))
 
     return app

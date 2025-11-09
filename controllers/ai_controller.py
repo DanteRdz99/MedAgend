@@ -2,6 +2,9 @@ import os
 import google.generativeai as genai
 from services import medico_service, cita_service
 from datetime import datetime
+# --- ¡ESTA ES LA CORRECCIÓN! ---
+from google.ai.generativelanguage import Part # La importación correcta
+# --- FIN DE LA CORRECCIÓN ---
 
 class AiController:
     def __init__(self, user):
@@ -67,7 +70,6 @@ class AiController:
             response = self.chat.send_message(message)
             
             # 2. Revisar si la IA quiere usar una herramienta
-            # (Asegurarse de que response.candidates no esté vacío y tenga partes)
             while (response.candidates and response.candidates[0].content.parts and 
                    response.candidates[0].content.parts[0].function_call):
                 
@@ -81,8 +83,6 @@ class AiController:
                 if tool_name in self.tools:
                     tool_function = self.tools[tool_name]
                     
-                    # --- Lógica especial de IA ---
-                    # Inyectar el paciente_id si la IA no lo sabe
                     if 'paciente_id' not in tool_args and (tool_name == 'agendar_cita' or tool_name == 'get_mis_citas'):
                         tool_args['paciente_id'] = self.user['paciente_id']
                     
@@ -93,12 +93,15 @@ class AiController:
                 print(f"Resultado de la herramienta: {tool_result}")
 
                 # 4. Enviar el resultado de la herramienta de vuelta a Gemini
+                # Esta línea ahora usará el 'Part' que importamos correctamente
                 response = self.chat.send_message(
-                    genai.Part(
-                        function_response=genai.protos.FunctionResponse(
-                            name=tool_name,
-                            response={'result': tool_result}
-                        )
+                    Part(
+                        function_response={
+                            "name": tool_name,
+                            "response": {
+                                "result": tool_result
+                            }
+                        }
                     )
                 )
             
@@ -106,7 +109,7 @@ class AiController:
             return response.text
 
         except Exception as e:
-            # Imprime el error real en la terminal (esto es lo que vimos)
+            # Imprime el error real en la terminal
             print(f"Error en AiController: {e}") 
             return "Lo siento, tuve un error procesando tu solicitud. Por favor, intenta de nuevo."
 
@@ -128,7 +131,6 @@ class AiController:
         except Exception as e:
             print(f"Error al llamar a medico_service.get_medicos: {e}")
             return {"error": f"Error interno al buscar médicos: {e}"}
-
 
     def agendar_cita(self, paciente_id: int, medico_id: int, fecha_hora_inicio: str, notas_paciente: str = ""):
         """

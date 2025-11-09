@@ -49,7 +49,8 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre_completo TEXT NOT NULL,
         especialidad TEXT NOT NULL,
-        horario_trabajo TEXT  -- Almacenado como JSON, ej: {"lunes": ["09:00-13:00", "14:00-17:00"]}
+        horario_trabajo TEXT,
+        ubicacion TEXT  -- <-- ¡NUEVO CAMPO! (Ej: "Consultorio 105, Piso 1")
     )
     """)
     
@@ -94,8 +95,8 @@ def init_db():
     try:
         horario_dr = '{"lunes": ["09:00-12:00"], "miercoles": ["09:00-12:00"], "viernes": ["09:00-12:00"]}'
         cursor.execute(
-            "INSERT INTO medicos (nombre_completo, especialidad, horario_trabajo) VALUES (?, ?, ?)",
-            ('Dr. Alan Turing', 'Cardiología', horario_dr)
+            "INSERT INTO medicos (nombre_completo, especialidad, horario_trabajo, ubicacion) VALUES (?, ?, ?, ?)",
+            ('Dr. Alan Turing', 'Cardiología', horario_dr, 'Consultorio 201')
         )
     except sqlite3.IntegrityError:
         pass
